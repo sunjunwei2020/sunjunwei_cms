@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sjw.cms.dao.ArticleDao">
+	<!-- 插入 -->  
+ 	<insert id="insert"> 
+ 		insert into cms_article(title,content,channel_id,user_id,hits,hot,status,deleted,created,category_id,picture) 
+ 		values(#{title},#{content},#{channelId},#{userId},#{hits},#{hot},#{status},#{deleted},#{created},#{categoryId},#{picture})
+ 	</insert>
+	<!-- 列表查询 -->
+	<select id="select" resultMap="articleMap">
+		select a.*,ca.`name` categoryname,ch.`name` channelname,us.username 
+		from cms_article a LEFT JOIN cms_category ca on a.category_id=ca.id 
+		LEFT JOIN cms_channel ch on a.channel_id=ch.id LEFT JOIN
+		cms_user us on a.user_id=us.id
+		
+		<where>
+			<if test="userId!=null">
+				and a.user_id=#{userId}
+			</if>
+			<if test="title!=null and title!=''">
+				and a.title like concat('%',#{title},'%')
+			</if>
+			<if test="status!=null">
+				and a.status = #{status}
+			</if>
+			<if test="channelId!=null">
+				and a.channel_id=#{channelId}
+			</if>
+			<if test="categoryId!=null">
+				and a.category_id=#{categoryId}
+			</if>
+			<if test="hot!=null">
+				and a.hot=#{hot}
+			</if>
+		</where>
+		order by a.created desc
+	</select>
+	<!-- 对应关系 -->
+	<resultMap type="Article" id="articleMap">
+		<id column="id" property="id"/>
+		<result column="title" property="title"/>
+		<result column="content" property="content"/>
+		<result column="channel_id" property="channelId"/>
+		<result column="user_id" property="userId"/>
+		<result column="hits" property="hits"/>
+		<result column="hot" property="hot"/>
+		<result column="status" property="status"/>
+		<result column="deleted" property="deleted"/>
+		<result column="created" property="created"/>
+		<result column="category_id" property="categoryId"/>
+		<result column="picture" property="picture"/>
+		<!-- user -->
+		<association property="user" javaType="User">
+			<id column="id" property="id"/>
+			<result column="username" property="username"/>
+		</association>
+		<!-- channel -->
+		<association property="channel" javaType="Channel">
+			<id column="id" property="id"/>
+			<result column="channelname" property="name"/>
+		</association>
+		<!-- category -->
+		<association property="category" javaType="Category">
+			<id column="id" property="id"/>
+			<result column="categoryname" property="name"/>
+		</association>
+	</resultMap>
+	
+	<!-- 查询单条 -->
+	<select id="sele" resultMap="articleMap" >
+		select * from cms_article ar left join cms_user us on ar.user_id=us.id where ar.id = #{id}
+	</select>
+	<!-- 修改 是否热门 -->
+	<update id="updatehot">
+		update cms_article 
+		<set>
+			<if test="hot!=null">
+				hot=#{hot},
+			</if>
+		</set>
+		where id = #{id}
+	</update>
+	
+	<!-- 修改状态 是否审核通过 -->
+	<update id="updatestatus">
+		update cms_article set status=#{status} where id = #{id}
+	</update>
+	<!-- 查询我的收藏 -->
+	<select id="selectCollect" resultType="Collect">
+		select * from cms_collect where user_id = #{id}
+		order by created desc
+	</select>
+	
+	<!-- 查询评选内容 -->
+	<select id="choose" resultMap="articleMap">
+		select * from cms_article where id in(select article_id from cms_choose)
+	</select>
+	<!-- <resultMap type="Choose" id="chooseMap">
+		<id column="id" property="id"/>
+		<result column="choose_date" property="chooseDate"/>
+		<result column="article_id" property="articleId"/>
+		<result column="option" property="option"/>
+	</resultMap> -->
+	
+	<!-- 查询文章 -->
+	<select id="articleId" resultMap="articleMap">
+		select * from cms_article where id=#{id}
+	</select>
+	
+	
+	<select id="selectA" resultType="java.lang.Integer">
+		select count(*) A from cms_choose_result as c where c.option='A'
+	</select>
+	<select id="selectB" resultType="java.lang.Integer">
+		select count(*) B from cms_choose_result as c where c.option='B'
+	</select>
+	<select id="selectC" resultType="java.lang.Integer">
+		select count(*) C from cms_choose_result as c where c.option='C'
+	</select><select id="selectD" resultType="java.lang.Integer">
+		select count(*) D from cms_choose_result as c where c.option='D'
+	</select>
+	<select id="selectSum" resultType="java.lang.Integer">
+		select count(*) sum from cms_choose_result
+	</select>
+	
+	
+</mapper>

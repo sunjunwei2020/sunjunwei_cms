@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sjw.cms.dao.CommentDao">
+	
+	<!-- 查询当前评论 -->
+	<select id="selects" resultMap="commentMap">		
+		select co.*,us.username,ar.title from cms_comment co 
+		LEFT JOIN cms_user us on co.user_id=us.id
+		LEFT JOIN cms_article ar on co.article_id=ar.id
+		where co.article_id=#{id} <!-- co.user_id=#{userId} and  -->
+		order by co.created desc
+	</select>
+	<!-- 对应关系 -->
+	<resultMap type="Comment" id="commentMap">
+		<id column="id" property="id"/>
+		<result column="user_id" property="userId"/>
+		<result column="article_id" property="articleId"/>
+		<result column="content" property="content"/>
+		<result column="created" property="created"/>
+		
+		<association property="user" javaType="User">
+			<id column="user_id" property="id"/>
+			<result column="username" property="username"/>
+		</association>
+		
+		<association property="article" javaType="Article">
+			<id column="article_id" property="id"/>
+			<result column="title" property="title"/>
+		</association>
+	</resultMap>
+	
+	<!-- 增加评论 -->
+	<insert id="insert">
+		insert into cms_comment(user_id,article_id,content,created)
+		values(#{userId},#{articleId},#{content},#{created})
+	</insert>
+	
+	<!-- 查询所有评论 按评论数量倒序排列 -->
+	<select id="selectsByCommentNum" resultType="Article">
+		select * from  cms_article order by plnum desc
+	</select>
+	
+	<!-- 评论数量 -->
+	<update id="updateArticle">
+		update cms_article set plnum=plnum+1 where id=#{articleId}
+	</update>
+	
+</mapper>
